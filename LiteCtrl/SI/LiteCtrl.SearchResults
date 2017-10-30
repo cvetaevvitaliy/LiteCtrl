@@ -1,0 +1,25 @@
+---- cc110x_write_strobe Matches (24 in 3 files) ----
+Cc110x_adapter.c (cc110x):int cc110x_write_strobe(int regaddr)
+Cc110x_adapter.h (cc110x):extern int cc110x_write_strobe(int regaddr);
+Cc110x_hal.c (cc110x):	cc110x_write_strobe(SFTX);
+Cc110x_hal.c (cc110x):	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x):    cc110x_write_strobe(STX);		//进入发送模式发送数据
+Cc110x_hal.c (cc110x):	cc110x_write_strobe(SFRX);		//清洗接收缓冲区
+Cc110x_hal.c (cc110x):	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x):	cc110x_write_strobe(SRX);
+Cc110x_hal.c (cc110x)://	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x)://    cc110x_write_strobe(SRX);		//进入接收状态
+Cc110x_hal.c (cc110x)://	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x)://    cc110x_write_strobe(SRX);		//进入接收状态
+Cc110x_hal.c (cc110x)://	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x)://    cc110x_write_strobe(STX);		//进入发送模式发送数据
+Cc110x_hal.c (cc110x)://	cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x)://    cc110x_write_strobe(STX);		//进入发送模式发送数据
+Cc110x_hal.c (cc110x):            //cc110x_write_strobe(SFRX);		//清洗接收缓冲区
+Cc110x_hal.c (cc110x):			cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x):			cc110x_write_strobe(SFRX);		//清洗接收缓冲区
+Cc110x_hal.c (cc110x):			cc110x_write_strobe(SRX);
+Cc110x_hal.c (cc110x):				cc110x_write_strobe(SIDLE);
+Cc110x_hal.c (cc110x):				cc110x_write_strobe(SFTX);	
+Cc110x_hal.c (cc110x):			    cc110x_write_strobe(SFRX);		//清洗接收缓冲区
+Cc110x_hal.c (cc110x):			    cc110x_write_strobe(SRX);	
