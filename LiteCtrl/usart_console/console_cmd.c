@@ -7,7 +7,10 @@
 #include "device_info.h"
 #include "module_common.h"
 #include "trf796xx_module.h"
-
+#include "adc.h"
+#include "sysmode.h"
+#include "check_out_card.h"
+#include "device_info.h"
 
 static int sz_strcmp_t(char *str1,char *str2)
 {
@@ -152,6 +155,22 @@ int console_cmd_echo(char argc,char *argv[])
 		set_read_card_count_print(flg);
 		
 	}
+	else if(sz_strcmp_t("read_time_out",argv[1])==0)
+	{
+		int flg;
+		flg = sz_strtoul((const char *)argv[0],0,10);
+		set_subdev_card_read_time_out_flg((char*)&flg,1);
+		set_read_card_time_out(flg);
+		
+	}
+	else if(sz_strcmp_t("onlie_card_print",argv[1])==0)
+	{
+		int flg;
+		flg = sz_strtoul((const char *)argv[0],0,10);
+		set_subdev_card_online_print_flg((char*)&flg,1);
+		set_card_info_pf(flg);
+		
+	}
     else if(sz_strcmp_t("mst_cpu_id",argv[1])==0)
     {
 		char tmp[12]={0};
@@ -178,7 +197,7 @@ int console_cmd_echo(char argc,char *argv[])
 		set_master_addr((char *) &mst_addr, 4);
 		set_subdev_addr((char *) &sub_addr, 4);
     }
-	
+
 	return 0;
 }
 
@@ -200,7 +219,7 @@ int console_cmd_cat(char argc,char *argv[])
 	{
 		char buf[4]={0};
 		get_master_addr(buf,4);
-        sz_printf("master addr = %s\r\n",buf);
+        sz_printf("maddr = %s\r\n",buf);
 	}
 	else if(sz_strcmp_t("msg",argv[0])==0)
 	{
@@ -246,6 +265,23 @@ int console_cmd_cat(char argc,char *argv[])
 	{
 		sz_printk("system time:%d\n",HAL_GetTick());		
 	}
+	else if(sz_strcmp_t("adc",argv[0])==0)
+	{
+		sz_printk("adc:%d\n",get_adc_value());		
+	}
+	else if(sz_strcmp_t("sysmod",argv[0])==0)
+	{
+		read_sysmode();		
+	}
+	else if(sz_strcmp_t("version",argv[0])==0)
+	{
+		print_version();
+	}
+
+	else if(sz_strcmp_t("inner_version",argv[0])==0)
+	{
+		print_inner_version();
+	}
 	return 0;
 }
 

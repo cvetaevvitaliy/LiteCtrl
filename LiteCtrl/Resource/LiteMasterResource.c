@@ -23,6 +23,8 @@
 #define CARD_COUNT_LONG_TIME_BASE (22)
 #define CARD_COUNT_FILTER_TIME_BASE (26)
 #define CARD_COUNT_PRINT_ENABLE_BASE (30)
+#define CARD_ONLINE_PRINT_BASE (31)
+#define CARD_READ_TIME_OUT_BASE (32)
 /*
 		EEPROM ÒÔ×Ö½ÚÐ´
 		Addr:Æ«ÒÆ 0-2047
@@ -207,6 +209,29 @@ int get_subdev_card_cnt_print_flg(char *buf,int len)
 	return 1;
 }
 
+void set_subdev_card_online_print_flg(char *buf,int len)
+{
+	EEPROM_WriteBytes(CARD_ONLINE_PRINT_BASE,buf,1);
+}
+
+int get_subdev_card_online_print_flg(char *buf,int len)
+{
+	EEPROM_ReadBytes(CARD_ONLINE_PRINT_BASE,buf,1);
+	return 1;
+}
+
+void set_subdev_card_read_time_out_flg(char *buf,int len)
+{
+	EEPROM_WriteBytes(CARD_READ_TIME_OUT_BASE,buf,1);
+}
+
+int get_subdev_card_read_time_out_flg(char *buf,int len)
+{
+	EEPROM_ReadBytes(CARD_READ_TIME_OUT_BASE,buf,1);
+	return 1;
+}
+
+
 
 void device_defult_init()
 {
@@ -226,6 +251,12 @@ void device_defult_init()
 
 	res = 1;
 	set_subdev_card_cnt_print_flg((char*)&res,1);
+
+	res = 0;
+	set_subdev_card_online_print_flg((char*)&res,1);
+	
+	res = 40;
+	set_subdev_card_read_time_out_flg((char*)&res,1);
 }
 
 
@@ -244,7 +275,7 @@ void print_system()
 
 	sz_memset(buf,0, 12);
 	get_master_addr(buf,1);
-	sz_printf("*master addr    :%#x\r\n",sz_ctoi(buf,1)&0xFF);
+	sz_printf("*maddr          :%#x\r\n",sz_ctoi(buf,1)&0xFF);
 
 	sz_memset(buf,0, 12);
 	get_subdev_addr(buf,1);
@@ -252,7 +283,7 @@ void print_system()
 
 	sz_memset(buf,0, 12);
 	get_master_id(buf,12);
-    sz_printf("*master id      :");
+    sz_printf("*mst_cpu_id     :");
 	for(i=0;i<12;i++)
 	{
 	    sz_printf("%X",buf[i]);
@@ -297,6 +328,10 @@ void print_system()
     sz_memset(buf,0, 12);
 	get_subdev_card_cnt_filter_time(buf,4);
 	sz_printf("*filter_time    :%dms\r\n",sz_ctoi(buf,4));
+
+	sz_memset(buf,0, 12);
+	get_subdev_card_read_time_out_flg(buf,4);
+	sz_printf("*read_time_out  :%dms\r\n",sz_ctoi(buf,4));
 	
 	sz_memset(buf,0, 12);
 	get_subdev_card_cnt_print_flg(buf,1);

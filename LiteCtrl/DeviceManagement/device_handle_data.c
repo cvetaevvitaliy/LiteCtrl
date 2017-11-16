@@ -86,6 +86,22 @@ int device_pakage_match_set_addr_respond()
     return -1; 
 }
 
+static int send_special_cmd_ack()
+{
+	int len;
+    struct cc1101_msg_list_t *p_cc110_msg;
+    p_cc110_msg= cc1101_msg_alloc_send_msg();
+    if(p_cc110_msg)
+    {
+		//sz_printk("\n\nsend pos:%d\n",which);
+    	len = cc1101_master_pakage_send_sig_ack(p_cc110_msg->buf,p_cc110_msg->max,cc1101_get_rx_sig_strength());
+		p_cc110_msg->len = len;
+    	cc101_msg_send_commit(p_cc110_msg,2,5);
+		return 0;
+    }
+    return -1; 
+}
+
 int cc1101_handle_data(char *buf,int buf_len)
 {
 	char *p_buf = buf;
@@ -208,9 +224,12 @@ int cc1101_handle_data(char *buf,int buf_len)
 			set_online_time();
 			break;
 		case CC1101_COMM_REPORT_SIG:
+			//sz_printk("sig.\n");
+			//p_buf+=12;
 			cc1101_set_tx_sig_strength((int)(*p_buf));
+			send_special_cmd_ack();
 			break;
-		default:
+	 	default:
 			sz_printk("dst_addr:%#x,recv error cmd:%#x\n",addr,cmd);
 			break;
     }

@@ -28,6 +28,7 @@ struct trf796xx_priv_t
 	int filter_time;
 	int asy_time;
 	int cnt_print_flg;
+	int read_time_out;
 };
 static struct trf796xx_priv_t trf_796xx;
 static int start_time;
@@ -148,6 +149,16 @@ void set_read_card_count_print(int new_flg)
 {
 	sz_printk("card_print:%d(%s)\n",new_flg,new_flg==0?"enable":"disable");
 	trf_796xx.cnt_print_flg= new_flg;
+}
+
+void set_read_card_time_out(int new_time)
+{
+	if(new_time<=0 || new_time > 45)
+	{
+		new_time = 30;
+	}
+	sz_printk("read_time_out:%dms\n",new_time);
+	trf_796xx.read_time_out= new_time;
 }
 
 
@@ -333,13 +344,16 @@ static void recv_irq()
 			break;
 		case SEND_SILENCE_1_CMD:
 			{
+				#if 0
 				int len;
-//		        len = trf7962_read_fifo(trf796xx_next.block0,16,1);
                 len = trf7962_read_fifo(trf796xx_next.block0,16,1);
-//				if(len>0)
-//				{
-//					printf_fifo(trf796xx_next.block0,len);
-//				}
+				if(len>0)
+				{
+					printf_fifo(trf796xx_next.block0,len);
+				}
+				#else
+				trf7962_read_fifo(trf796xx_next.block0,16,1);
+				#endif
 	 	    }
 		case SEND_SILENCE_2_CMD:
 			break;
@@ -411,6 +425,10 @@ void trf796xx_module_init()
 	res = 0;
 	get_subdev_card_cnt_print_flg((char *)&res,4);
 	set_read_card_count_print(sz_ctoi((char *)&res,4));
+
+	res = 0;
+	get_subdev_card_read_time_out_flg((char *)&res,4);
+	set_read_card_time_out(sz_ctoi((char *)&res,4));
 {
 	char *pt;
 	trf796xx_next.pos = 0;
@@ -456,32 +474,35 @@ char _tbuf[12];
 
 static int trf796xx_cmp_card()
 {
-//	int i;
-//	char *pt = trf796xx_next.block[trf796xx_next.pos];
-//	sz_printk("pos:%d\n",trf796xx_next.pos);
-//	for(i = 0;i < 3;i++)
-//	{
-//
-//		if(pt == trf796xx_next.block[i])
-//		{
-//		    continue;	
-//		}
-//		else
-//		{
-//			if(sz_memcmp((const void *)&trf796xx_next.block[i][4], (const void *)&pt[4],7)==0)
-//            {
-//                return -1;
-//            }
-//		}
-//	}
+	int i;
+	char *pt = trf796xx_next.block[trf796xx_next.pos];
+	//sz_printk("pos:%d\n",trf796xx_next.pos);
+	for(i = 0;i < 3;i++)
+	{
+
+		if(pt == trf796xx_next.block[i])
+		{
+		    continue;	
+		}
+		else
+		{
+			if(sz_memcmp((const void *)&trf796xx_next.block[i][4], (const void *)&pt[4],7)==0)
+            {
+                return -1;
+            }
+		}
+	}
     
     return 0;
 }
 
 void clear_store_repeat_card()
 {
-//	sz_memset(tmp_block[0],0,16);
-//	sz_memset(tmp_block[1],0,16);
+	int i;
+	for(i=0;i<3;i++)
+	{
+		sz_memset(&trf796xx_next.block[i][4],0,4);
+	}
 }
 static void trf796xx_second_thread(struct delay_work *p_dw)
 {
@@ -501,7 +522,10 @@ static void trf796xx_second_thread(struct delay_work *p_dw)
 			cnt = trf_796xx.irq_cnt - trf_796xx.read_card_cnt;
 			if(cnt > 0)
 			{
-				//sz_printk("2.aft push %d err_cards,read_card_cnt=%d\n",cnt,trf_796xx.read_card_cnt);
+				if(trf_796xx.cnt_print_flg==0)
+				{
+					sz_printk("2.aft push %d err_cards,read_card_cnt=%d\n",cnt,trf_796xx.read_card_cnt);
+				}
 				for(i=0;i<cnt;i++)
 				{
 					store_card(ch);
@@ -516,13 +540,13 @@ static void trf796xx_second_thread(struct delay_work *p_dw)
 		
 	}
 
-	if((current_time - trf_796xx.asy_time)>10*1000)
+	if((current_time - trf_796xx.asy_time)>60*1000)
 	{
 		DIS_ALL_INT();
 		trf_796xx.asy_time = current_time;
 		trf_796xx.read_card_cnt = trf_796xx.irq_cnt;
 		EN_ALL_INT();
-		//clear_store_repeat_card();
+		clear_store_repeat_card();
 	}
 	shedule_delay(p_dw,1);
 }
@@ -582,73 +606,77 @@ static void trf796xx_thread(struct delay_work *p_dw)
 				if(trf_796xx.count_enable == 0)
 				{
 					int cnt;	
+					char ca_ch;
 					DIS_ALL_INT();
 					trf_796xx.enable_count_time = -1;
 					decode_card(trf796xx_next.block0+1,pt+4);
-					//printf_fifo(pt,13);
-					if((pt[11]!=0)&&(trf796xx_cmp_card()==0))
+					//printf_fifo(pt+4,8);
+					ca_ch = pt[11]&0x7F;
+					if(ca_ch<0 || ca_ch > 44)
 					{
-						//printf_fifo(trf796xx_next.block0,8);
-						trf796xx_next.repeat_flg = 0;
-						trf_796xx.read_card_cnt ++;
-						if(trf_796xx.cnt_print_flg==0)
-						{
-						    sz_printk("1.irq num.:%d,read num.:%d\n",trf_796xx.irq_cnt,trf_796xx.read_card_cnt);
-						}
-						cnt = trf_796xx.read_card_cnt - trf_796xx.irq_cnt;
-						if(cnt>=0)
-						{
-					    	store_card(pt[11]);//¥Ê≈∆
-						}
-						else
-						{
-							int i;
-    						char ch = 0;
-    						cnt = -cnt;
-							if(trf_796xx.cnt_print_flg==0)
-							{
-	    					    sz_printk("1.aft push %d err_cards,read_card_cnt=%d\n",cnt,trf_796xx.read_card_cnt);
-							}
-	    					for(i=0;i<cnt;i++)
-	    					{
-	    						store_card(ch);
-	    					}
-							store_card(pt[11]);
-	    					trf_796xx.read_card_cnt = trf_796xx.irq_cnt;
-						}
+						//sz_printk("read a invalid card\n");
+						//trf_796xx.read_card_cnt ++;
+						GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
 					}
 					else
 					{
-						if(pt[11]==0)
-						{
-							sz_printk("read a invalid card\n");
-
-						}
-						else
-						{
-
-							sz_printk("read a repeat card\n");
-						}
-						trf796xx_next.repeat_flg = -1;
+					    if(trf796xx_cmp_card()==0)
+    					{
+    						//printf_fifo(trf796xx_next.block0,8);
+    						trf796xx_next.repeat_flg = 0;
+    						trf_796xx.read_card_cnt ++;
+    						if(trf_796xx.cnt_print_flg==0)
+    						{
+    						    sz_printk("1.irq num.:%d,read num.:%d\n",trf_796xx.irq_cnt,trf_796xx.read_card_cnt);
+    						}
+    						cnt = trf_796xx.read_card_cnt - trf_796xx.irq_cnt;
+    						if(cnt>=0)
+    						{
+    					    	store_card(pt[11]);//¥Ê≈∆
+    						}
+    						else
+    						{
+    							int i;
+        						char ch = 0;
+        						cnt = -cnt;
+    							if(trf_796xx.cnt_print_flg==0)
+    							{
+    	    					    sz_printk("1.aft push %d err_cards,read_card_cnt=%d\n",cnt,trf_796xx.read_card_cnt);
+    							}
+    	    					for(i=0;i<cnt;i++)
+    	    					{
+    	    						store_card(ch);
+    	    					}
+    							store_card(pt[11]);
+    	    					trf_796xx.read_card_cnt = trf_796xx.irq_cnt;
+    						}
+    					}
+    					else
+    					{
+    						//sz_printk("read a repeat card\n");
+    						trf796xx_next.repeat_flg = -1;
+							//trf_796xx.read_card_cnt = trf_796xx.irq_cnt;
+    					}
+						
+                        pt[11]=0xE0;
+                        keep_silence_t(pt,14);
+						//sz_printk("1.send keep\n");
+                        GO_NEXET_STEP(trf_796xx.step);
+                        trf_796xx.time_cnt = 0;
+                        trf_796xx.read_blk_flg = -1;
 					}
 					EN_ALL_INT();
+					trf_796xx.asy_time = HAL_GetTick();
+					shedule_delay(&trf7962_dlw_st,1);
 				}
-				
-				//pt[11]=0xE0;
-    			//keep_silence(&trf796xx_next.block0[1],8);
-                //keep_silence_t(pt,13);
-				
-				//GO_NEXET_STEP(trf_796xx.step);
-				//trf_796xx.time_cnt = 0;
-				//trf_796xx.read_blk_flg = -1;
-				GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
-				shedule_delay(&trf7962_dlw_st,10);
-				//trf_796xx.asy_time = HAL_GetTick();
-				//sz_printk("[%d]1.send keep s\n",HAL_GetTick());
+			    else
+			    {
+					
+			    }
 			}
 			else
 			{
-                if(trf_796xx.time_cnt > 30)
+                if(trf_796xx.time_cnt > trf_796xx.read_time_out)
                 {					
                     GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
 					shedule_delay(&trf7962_dlw_st,1);
@@ -679,17 +707,18 @@ static void trf796xx_thread(struct delay_work *p_dw)
     				gg = (gg+1)%3;
     				trf796xx_next.pos =gg;
 				}
+				//GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
     			GO_NEXET_STEP(trf_796xx.step);
 				//keep_silence(&trf796xx_next.block0[1],8);
-				keep_silence_t(pt,13);
+				keep_silence_t(pt,14);
+				//sz_printk("2.send keep\n");
 				trf_796xx.time_cnt = 0;
 				trf_796xx.read_blk_flg = -1;
-				shedule_delay(&trf7962_dlw_st,10);
-				//sz_printk("[%d]2.send keep s\n",HAL_GetTick());
+				shedule_delay(&trf7962_dlw_st,1);
 			}
 			else
 			{
-                if(trf_796xx.time_cnt > 30)
+                if(trf_796xx.time_cnt > 40)
                 {
 					if(trf796xx_next.repeat_flg == 0)
 				    {
@@ -716,11 +745,11 @@ static void trf796xx_thread(struct delay_work *p_dw)
 			{
 		        shedule_delay(&trf7962_dlw_st,1);
 				GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
-				//sz_printk("[%d]3.send keep end\n",HAL_GetTick());
+				//sz_printk("3.send keep end\n",HAL_GetTick());
 			}
 			else
 			{
-                if(trf_796xx.time_cnt > 30)
+                if(trf_796xx.time_cnt > 40)
                 {
                     GOTO_STEP(trf_796xx.step,SEND_READ_BLK_CMD);
 					shedule_delay(&trf7962_dlw_st,1);
@@ -741,13 +770,13 @@ static void trf796xx_thread(struct delay_work *p_dw)
 
 static struct trf796xx_data_t str_regs[]=
 {
-#if 0
-	{ChipStateControl,0x34},
-	{ISOControl,0x05},
-	{ModulatorControl,0x31},
-	{RXNoResponseWaitTime,0x01},
-	{RXWaitTime,0x01},
-    {RXSpecialSettings,0x42},
+#if 1
+	{ChipStateControl,0x31},
+	{ISOControl,0x01},
+	{ModulatorControl,0x01},
+	{RXNoResponseWaitTime,0x0E},
+	{RXWaitTime,0x1F},
+    {RXSpecialSettings,0x40},
     {RegulatorControl,0x06}
 #else
     {ChipStateControl,0x21},

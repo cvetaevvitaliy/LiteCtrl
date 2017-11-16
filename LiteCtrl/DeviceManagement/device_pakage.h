@@ -15,6 +15,7 @@ enum
 enum
 {
 	CC1101_COMM_REPORT_SIG = 0x40,
+	CC1101_COMM_REPORT_SIG_ACK,	
 };
 
 enum
@@ -46,5 +47,5 @@ extern int cc1101_sub_pakage_stom_request(char *buf,int buf_len,struct master_de
 extern int cc1101_sub_pakage_match_set_addr(char *buf,int buf_len,struct master_device_t *pmaster,struct sub_device_t *psub);
 extern int cc1101_sub_pakage_send_card(char *buf,int buf_len,struct master_device_t *pmaster,struct sub_device_t *psub,
 	char *card,int card_cnt);
-
+extern int cc1101_master_pakage_send_sig_ack(char *buf,int buf_len,char sig_str);
 #endif

@@ -51,5 +51,6 @@ extern void set_device_attr(int attr);
 extern int get_device_attr();
 extern struct sub_device_t *get_subdevice();
 extern struct master_device_t *get_masterdevice();
-
+extern int print_version();
+extern int print_inner_version();
 #endif

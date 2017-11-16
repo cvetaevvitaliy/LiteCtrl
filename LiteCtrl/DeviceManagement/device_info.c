@@ -7,6 +7,22 @@ static struct sub_device_t  sub_device;
 static int device_attr;
 static int online[4];
 
+const char *_VERSION = "0.0.1.20171116";
+const char *inner_version = "0.0.0";
+const char *update_time = "2017.11.16 16:36";
+
+int print_version()
+{
+	printf_green("Subdev Soft Version:%s\r\n",_VERSION);
+}
+
+int print_inner_version()
+{
+	printf_green("\r\nInner Version   :%s\r\n",inner_version);
+	printf_green("Last update time:%s\r\n",update_time);
+}
+
+
 int device_init_sys_info()
 {
 	char buf;

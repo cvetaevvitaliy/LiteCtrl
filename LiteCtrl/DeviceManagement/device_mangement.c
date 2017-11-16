@@ -11,6 +11,8 @@
 #include "led.h"
 #include "cc110x_hal.h"
 #include "sz_libc.h"
+#include "sysmode.h"
+
 static int device_mode;
 
 struct delay_work device_dwk;
@@ -96,7 +98,7 @@ int device_setup(int mode,int channel)
 			//shedule_delay(&device_dwk,3000);// 3s
 			break; 
 		case LITECTRL_BOARD_CHEKING:
-			shedule_delay(&device_dwk,300);
+			shedule_delay(&device_dwk,1000);
 			cc110x_start_work(get_subdevice()->subaddr,channel);
 			break;
 		default:
@@ -112,9 +114,35 @@ static int get_device_running_mode()
 	return 0;
 }
 
+static void mode_select()
+{
+	int mod = read_sysmode();
+	switch(mod)
+	{
+		case 1:
+			init_adc_timer();
+			adc_start();
+			HAL_Delay(100);
+			device_setup(LITECTRL_BOARD_CHEKING,get_channel());
+			adc_stop();
+			break;
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			mod = mod - 1;
+			set_subdev_pos((char*)&mod,1);
+			device_setup(LITECTRL_PRODUCE_CHEKING,0);  
+			break;
+		default:
+			device_setup(LITECTRL_NORMAL_WORK,0);
+			break;
+	}
+}
 void device_init()
 {
 	char buf;
+	init_sysmde_pin();
 	shedule_init(&device_dwk);
     device_dwk.handle = device_dwk_fun;
 	device_init_sys_info();
@@ -122,18 +150,8 @@ void device_init()
 	set_cc1101_handle_recv_data(cc1101_handle_data);
 	set_device_init_flg(DEVICE_UNINIT);
 	get_subdev_flg(&buf,1);
-//	if(buf == 0xF0)
-//	{
-//		sz_printk("system open for normal\n");
-//		device_setup(LITECTRL_NORMAL_WORK,0);
-//	}
-//	else
-//	{
-//		sz_printk("system is not init\n");
-//		//device_setup(LITECTRL_FIRST_RUNNING,0);
-//	}
-    device_setup(LITECTRL_BOARD_CHEKING,0);
-    //device_setup(LITECTRL_NORMAL_WORK,0);
+    mode_select();
+	//device_setup(LITECTRL_BOARD_CHEKING,0);
 }
 
 
@@ -159,6 +177,7 @@ static void dlw_normal_running(struct delay_work *p_dwk)
             	sz_printk("scaning ...\n");
             	cc110x_stop_work();
             	channel = get_subdevice()->chanel+1;
+				//channel = get_subdevice()->chanel;
             	if(channel >=16)
             		channel = 8;
             	get_subdevice()->chanel = channel;
@@ -190,9 +209,9 @@ static void board_check(struct delay_work *p_dwk)
 			//shedule_delay(p_dwk,100);
 			break;
 		case 1:
-			sz_printk("subdev_433_rx_signal:%2d",/*cc1101_get_rx_sig_strength()*/-56);
+			sz_printk("subdev_433_rx_signal:%2d",0-RSSI_calculated(cc1101_get_rx_sig_strength()));
 			sz_printf(" 433\r\n");
-			sz_printk("subdev_433_tx_signal:%2d",0-cc1101_get_tx_sig_strength());
+			sz_printk("subdev_433_tx_signal:%2d",0-RSSI_calculated(cc1101_get_tx_sig_strength()));
 			sz_printf(" 433\r\n");
 			sz_printk("subdev_read_card:%2d",18);
 			sz_printf(" card\r\n");

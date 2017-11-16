@@ -1,6 +1,7 @@
 #ifndef _SZ_LIBC_H_
 #define _SZ_LIBC_H_
 #define printk_red(args,...) sz_printk("\033[0;31m"args"\033[0;39m\n",##__VA_ARGS__)
+#define printf_green(args,...) sz_printf("\033[0;32m"args"\033[0;39m",##__VA_ARGS__)
 extern void sz_memset(char *buf,int value,int len);
 extern void *sz_memcpy(char *dst,char *src,int len);
 extern int sz_memcmp(const void * cs,const void * ct,int count);

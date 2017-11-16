@@ -26,5 +26,8 @@ extern void device_defult_init();
 extern int get_subdev_card_cnt_print_flg(char *buf,int len);
 extern void set_subdev_card_cnt_print_flg(char *buf,int len);
 extern int get_subdev_pos(char *buf,int len);
-
+extern void set_subdev_card_online_print_flg(char *buf,int len);
+extern int get_subdev_card_online_print_flg(char *buf,int len);
+extern void set_subdev_card_read_time_out_flg(char *buf,int len);
+extern int get_subdev_card_read_time_out_flg(char *buf,int len);
 #endif

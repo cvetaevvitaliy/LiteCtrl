@@ -335,7 +335,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\HAL_DRIVER\Inc;..\LIB;..\source;..\include;..\Libc\inc;..\usart_console;..\PresystemInit;..\LIB;..\trf796xx;..\Timer;..\spi;..\cc110x;..\CommentHeader;..\DeviceManagement;..\Resource;..\LED</IncludePath>
+              <IncludePath>..\HAL_DRIVER\Inc;..\LIB;..\source;..\include;..\Libc\inc;..\usart_console;..\PresystemInit;..\LIB;..\trf796xx;..\Timer;..\spi;..\cc110x;..\CommentHeader;..\DeviceManagement;..\Resource;..\LED;..\Adc;..\Sysmode</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -431,6 +431,16 @@
               <FileName>stm32l0xx_hal_dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HAL_DRIVER\Src\stm32l0xx_hal_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32l0xx_hal_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HAL_DRIVER\Src\stm32l0xx_hal_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32l0xx_hal_adc_ex.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HAL_DRIVER\Src\stm32l0xx_hal_adc_ex.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -601,6 +611,26 @@
               <FileName>module_common.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\CommentHeader\module_common.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Adc</GroupName>
+          <Files>
+            <File>
+              <FileName>adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Adc\adc.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Sysmode</GroupName>
+          <Files>
+            <File>
+              <FileName>sysmode.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Sysmode\sysmode.c</FilePath>
             </File>
           </Files>
         </Group>

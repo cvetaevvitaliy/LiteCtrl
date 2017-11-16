@@ -147,6 +147,25 @@ void init_gloabel_info()
 
 }
 
+void cc1101_set_rx_sig_strength(int sig_s)
+{
+	m_cc1101_pri.rx_sig_strength = sig_s;
+}
+
+int cc1101_get_rx_sig_strength()
+{
+	return m_cc1101_pri.rx_sig_strength;
+}
+void cc1101_set_tx_sig_strength(int sig_s)
+{
+	m_cc1101_pri.tx_sig_strength = sig_s;
+}
+
+int cc1101_get_tx_sig_strength()
+{
+	return m_cc1101_pri.tx_sig_strength;
+}
+
 void set_pakage_cnt(int flg,int strength)
 {
 	m_cc1101_pri.all_pakage++;
@@ -159,7 +178,7 @@ void set_pakage_cnt(int flg,int strength)
 	{
 		m_cc1101_pri.error_pakage++;
 	}
-	m_cc1101_pri.rx_sig_strength = strength;
+	cc1101_set_rx_sig_strength(strength);
 }
 
 void set_scan_cnt()
@@ -168,19 +187,6 @@ void set_scan_cnt()
 
 }
 
-int cc1101_get_rx_sig_strength()
-{
-	return RSSI_calculated(m_cc1101_pri.rx_sig_strength);
-}
-void cc1101_set_tx_sig_strength(int sig_s)
-{
-	m_cc1101_pri.tx_sig_strength = sig_s;
-}
-
-int cc1101_get_tx_sig_strength()
-{
-	return RSSI_calculated(m_cc1101_pri.tx_sig_strength);
-}
 
 void printf_cc1101_info()
 {

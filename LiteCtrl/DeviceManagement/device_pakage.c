@@ -41,3 +41,35 @@ int cc1101_sub_pakage_send_card(char *buf,int buf_len,struct master_device_t *pm
 	
 	return p_buf-buf;
 }
+
+
+int cc1101_master_pakage_send_sig_ack(char *buf,int buf_len,char sig_str)
+{
+	char *p_buf = buf;
+
+	//addr
+	*p_buf = 0xFF;//
+	++p_buf;
+	
+	//cseq
+	//sz_itoc(p_buf,psub->cseq);
+	//sz_printk("sub %d cseq:%d\n",psub->position_id,psub->cseq);
+	p_buf+=4;
+	
+	//cmd
+	*p_buf = CC1101_COMM_REPORT_SIG_ACK;
+	++p_buf;
+	
+	//position
+	//*p_buf = (char)psub->position_id;
+	++p_buf;
+	
+	//master id
+	//sz_memcpy(p_buf,pmaster->master_local_id,12);
+	//p_buf+=12;
+
+	*p_buf = sig_str;
+	++p_buf;
+	return p_buf-buf;
+}
+

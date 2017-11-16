@@ -2,7 +2,9 @@
 #include "ring_buffer.h"
 #include "device_mangement.h"
 #include "module_common.h"
+#include "trf796xx_module.h"
 
+#define _NEW_
 static RING_BUF cards_rng;
 static char cards_buf[64];
 static char pre_card;
@@ -23,6 +25,15 @@ static char card_name[45][6] = { { "错误" }, { "一萬" }, { "二萬" }, { "三萬" },
 //{ "Qiu" }, { "Tong" }, { "Mei" }, { "Lan" }, { "Ju" }, { "Chu" }, { "BaiTa" }, { "BaiBan" }
 //};
 #define Max_Card_number  44
+
+
+static int card_info_pf = 1;
+void set_card_info_pf(int new_f)
+{
+	sz_printk("onlie_card_print old:%d,new:%d\n",card_info_pf , new_f);
+	card_info_pf = new_f;
+}
+
 //前八个是UID 后 四个是block 
 // 高八位的 0x00蓝色 0x80绿色  低八位偏移量 （1-44正确 0错误）
 int check_out_card(char *uid_buf, int uid_len,char *blk_buf,int blk_len)
@@ -48,9 +59,12 @@ int check_out_card(char *uid_buf, int uid_len,char *blk_buf,int blk_len)
 
 
 
-void input_card()
+void init_card()
 {
-	
+	int res;
+	res = 0;
+	get_subdev_card_online_print_flg((char *)&res,4);
+	set_card_info_pf(sz_ctoi((char *)&res,4));
 }
 int getcards(char *src,int src_len)
 {
@@ -70,9 +84,12 @@ void store_card(char card)
 		sz_printf("card num. is out num\n");
 		return ;
 	}
-	sz_printk("%-dth:%s\n",++card_cnt,card_name[ret]);
+	if(card_info_pf>0)
+	{
+	    sz_printk("%-dth:%s(%d)\n",++card_cnt,card_name[ret],ret);
+	}
     push_buf(&cards_rng,&card,1);
-	if((pre_card == 0x13 && card == 0x93) ||(pre_card == 0x93 && card == 0x13))
+	if((pre_card == 0x0E && card == 0x8E) ||(pre_card == 0x8E && card == 0x0E))
 	{
 		device_setup(LITECTRL_FIRST_RUNNING,0);
 		pre_card = 0x00;
@@ -80,12 +97,84 @@ void store_card(char card)
 	pre_card = card; 
 }
 
+#ifdef _NEW_
+static int key[2]={0x3824cd57,0x8637acbf};
+#endif
+//加密牌
+//*in  输入要加密的ID
+//*out 输出要加密后的IDs
+//void encode_card(char *buf,char *out)
+//{
+//	char *src = out;
+//	char *end = out + 8;
+//	char tmp[8];
+//	char *dst = tmp;
+//	while(src<end)
+//	{
+//		  *dst = *src ;
+//          ++src;
+//		  ++dst;
+//	}
+//	
+//   switch(buf[1]/55)
+//   {
+//    case 0: 
+//    {
+//      out[3]=buf[0];out[0]=buf[1];out[7]=buf[2];out[4]=buf[3];out[1]=buf[4];out[2]=buf[5];out[5]=buf[6];out[6]=buf[7];     
+//      break;
+//    }
+//    case 1:
+//    {
+//      out[2]=buf[0];out[0]=buf[1];out[5]=buf[2];out[1]=buf[3];out[7]=buf[4];out[6]=buf[5];out[3]=buf[6];out[4]=buf[7];
+//      break;
+//    }
+//    case 2:
+//    {
+//      out[7]=buf[0];out[0]=buf[1];out[3]=buf[2];out[6]=buf[3];out[5]=buf[4];out[4]=buf[5];out[2]=buf[6];out[1]=buf[7];
+//      break;
+//    }
+//    case 3:
+//    {
+//      out[4]=buf[0];out[0]=buf[1];out[1]=buf[2];out[7]=buf[3];out[2]=buf[4];out[3]=buf[5];out[6]=buf[6];out[5]=buf[7];
+//      break;
+//    }
+//    case 4:
+//    {
+//      out[6]=buf[0];out[0]=buf[1];out[4]=buf[2];out[5]=buf[3];out[3]=buf[4];out[7]=buf[5];out[1]=buf[6];out[2]=buf[7];
+//      break;
+//    }
+//	#ifdef _NEW_
+//	{
+//		
+//    	*(int*)out = (*(int*)out)^key[0];
+//    	*(int*)(out+4) = (*(int*)(out+4))^key[1];
+//	}
+//	#endif
+//    default: break;  
+//   }
+//}
 
 //解牌
 //*in  输入需要解密的ID 
 //*out 输出真正的ID 
-void decode_card(char *in,char *out)
+//小机端主要字节对齐
+void decode_card(char *buf,char *out)
 {
+	
+	char *src = buf;
+	char *end = src + 8;
+	char in[8];
+	char *dst = in;
+	while(src<end)
+	{
+		  *dst = *src ;
+          ++src;
+		  ++dst;
+	}
+	#ifdef _NEW_
+    *(int*)in = (*(int*)in)^key[0];
+    *(int*)(in+4) = (*(int*)(in+4))^key[1];
+	#endif
    switch(in[0]/55)
    {
     case 0: 
